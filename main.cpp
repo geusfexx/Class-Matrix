@@ -42,6 +42,10 @@ public:
 
             //so we have:
             //[0] -> [] -> ***** -> ***** -> ***** -> *****
+
+            //But we lost this->rows/cols
+            this->num_rows = num_rows;
+            this->num_cols = num_cols;
         }
 
     }
@@ -58,6 +62,21 @@ public:
         if ((rows > this->num_rows)||(rows < 0)) throw out_of_range("Invalid parametr rows");
         else if ((cols > this->num_cols)||(cols < 0)) throw out_of_range("Invalid parametr cols");
         else return Data[rows][cols];
+    }
+
+    void Reset(const int & rows, const int & cols)
+    {
+        if (rows < 0) throw out_of_range("Invalid parametr rows");
+        else if (cols < 0) throw out_of_range("Invalid parametr cols");
+        else
+        {
+            if (this->Data != nullptr)
+            {
+                delete [] this->Data;
+                this->Data = nullptr;
+            }
+            new (this) Matrix(rows, cols);
+        }
     }
 
     ~Matrix()
@@ -94,20 +113,16 @@ istream & operator>>(istream& input,Matrix & m)
     int rows(0), cols(0);
     if (input >> rows >> cols)
     {
-        if ((rows != m.GetNumRows())||(rows < 0)) throw out_of_range("Invalid parametr rows");
-        else if ((cols != m.GetNumColumns())||(cols < 0)) throw out_of_range("Invalid parametr cols");
-        else
-        {
+            m.Reset(rows, cols);
             for (int i(0); i < rows; ++i)
             {
                 for (int j(0); j < cols; ++j)
                 {
                     int tmp(0);
-                    if (!input >> tmp) throw invalid_argument("Wrong data format");
-                    else m.at(i, j) = tmp;
+                    if (input >> tmp) m.at(i, j) = tmp;
+                    else throw invalid_argument("Wrong data format");
                 }
             }
-        }
     }
     else throw invalid_argument("Wrong type for rows/cols");
     return input;
@@ -125,14 +140,32 @@ ostream & operator<<(ostream& output,Matrix & m)
         }
         output << endl;
     }
-    output << endl;
+    //output << endl;
     return output;
 }
 
 Matrix & operator+(const Matrix& m1, const Matrix & m2)
-{
-    Matrix result;
-    return result;
+{    
+    int rows(m1.GetNumRows()), cols(m1.GetNumColumns());
+    Matrix * result = new Matrix(rows, cols);
+    if ((m1.GetNumColumns() != m2.GetNumColumns())||(m1.GetNumRows() != m2.GetNumRows()))
+    {
+        throw invalid_argument("");
+    }
+    else
+    {
+
+
+        for (int i(0); i < rows; ++i)
+        {
+            for (int j(0); j < cols; ++j)
+            {
+                result->at(i, j) = m1.at(i, j) + m2.at(i, j);
+            }
+        }
+        return *result;
+    }
+
 }
 
 bool operator==(const Matrix& m1, const Matrix & m2)
@@ -158,10 +191,28 @@ bool operator==(const Matrix& m1, const Matrix & m2)
 
 
 int main() {
-  Matrix one;
-  Matrix two;
 
-  cin >> one >> two;
-  cout << one + two << endl;
+
+  try
+  {
+        Matrix one;
+        Matrix two;
+      cin >> one >> two;
+      cout << (one + two) << endl;
+  }
+  catch(const invalid_argument &ia)
+  {
+      cout << ia.what() << endl;
+  }
+  catch(const out_of_range &oor)
+  {
+      cout << oor.what() << endl;
+  }
+  catch(...)
+  {
+      cout << "Something went wrong" << endl;
+  }
+
+
   return 0;
 }
